@@ -1,0 +1,33 @@
+services:
+
+  se5_postgres:
+    image: postgres
+    container_name: se5_postgres
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=se5-db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  se5_pgadmin:
+    image: dpage/pgadmin4
+    restart: always
+    container_name: se5_pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    ports:
+      - '5050:80'
+    depends_on:
+      - se5_postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+  
+
+volumes:
+  pgdata:
+  pgadmin_data:
