@@ -1,9 +1,37 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { NestFactory } from "@nestjs/core"
+import { AppModule } from "./app.module"
+import { ConfigService } from "@nestjs/config"
+import { Logger, ValidationPipe } from "@nestjs/common"
+import { createDocument } from "./swagger"
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(3000);
+  const logger = new Logger()
+
+  const app = await NestFactory.create(AppModule)
+
+  app.useGlobalPipes(new ValidationPipe())
+
+  const config = app.get(ConfigService)
+  const port = config.get<string>("port")
+  
+  const isDocsEnabled = config.get<boolean>("docs.enabled")
+
+  if (isDocsEnabled) {
+    createDocument(app)
+  }
+
+  await app.listen(port)
+  
+  const appUrl = await app.getUrl()  
+
+
+  logger.log(`🚀 Application is running on: ${appUrl}`)
+
+  if (isDocsEnabled) {
+    const docsPath = config.get<string>("docs.path")
+    logger.log(`📚 API Docs are available at: ${appUrl}/${docsPath}`)
+  }
 }
+
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-bootstrap();
+bootstrap()
