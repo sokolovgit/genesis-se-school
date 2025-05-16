@@ -1,0 +1,8 @@
+{
+  "name": "genesis-se-school",
+  "version": "1.0.0",
+  "description": "Genesis Sowtware Engineering School 5.0 case project",
+  "author": "Sokolov Oleksandr",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@9.9.0"
+}
