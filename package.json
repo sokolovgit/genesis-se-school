@@ -4,5 +4,11 @@
   "description": "Genesis Sowtware Engineering School 5.0 case project",
   "author": "Sokolov Oleksandr",
   "license": "UNLICENSED",
-  "packageManager": "pnpm@9.9.0"
+  "type": "module",
+  "packageManager": "pnpm@9.9.0",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7"
+  }
 }
