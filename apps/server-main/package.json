@@ -1,9 +1,9 @@
 {
-  "name": "nest-typescript-starter",
+  "name": "server-main",
   "private": true,
   "version": "1.0.0",
-  "description": "Nest TypeScript starter repository",
-  "license": "MIT",
+  "description": "Server application for Genesis Software Engineering School 5.0 case project",
+  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
