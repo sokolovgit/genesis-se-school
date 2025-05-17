@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { DataSource, DataSourceOptions } from 'typeorm';
-import { config as dataSourceConfig} from '../../../data-source';
+import { config as dataSourceConfig } from '../../../data-source';
 import { SeederOptions, runSeeders } from 'typeorm-extension';
 
 const bootstrap = async () => {

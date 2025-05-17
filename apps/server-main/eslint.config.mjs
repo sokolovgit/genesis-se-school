@@ -2,6 +2,7 @@
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
+import { resolve } from 'path';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -22,8 +23,8 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
         project: [
-          require.resolve('./tsconfig.json'),
-          require.resolve('./tsconfig.util.json'),
+          resolve('./tsconfig.json'),
+          resolve('./tsconfig.util.json'),
         ]
       },
     },
