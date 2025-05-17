@@ -1,0 +1,52 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createTransport, Transporter } from 'nodemailer';
+import { SendEmailOptions } from './interfaces/send-email-options.interface';
+import { InjectQueue } from '@nestjs/bullmq';
+import { EmailsQueue } from './emails.queue-definition';
+import { SendEmailJobData } from './interfaces/send-email.job-data.interface';
+import { Queue } from 'bullmq';
+
+@Injectable()
+export class EmailsService {
+  transporter: Transporter;
+
+  constructor(
+    @InjectQueue(EmailsQueue.SendEmail)
+    private readonly sendEmailQueue: Queue<SendEmailJobData>,
+    private readonly configService: ConfigService,
+  ) {
+    const username = this.configService.get<string>('smtp.username');
+    const password = this.configService.get<string>('smtp.password');
+
+    this.transporter = createTransport({
+      host: this.configService.get<string>('smtp.host'),
+      port: this.configService.get<number>('smtp.port'),
+      secure: this.configService.get<boolean>('smtp.secure'),
+      auth:
+        username && password
+          ? {
+              user: username,
+              pass: password,
+            }
+          : undefined,
+    });
+  }
+
+  async sendEmail(to: string, content: string, options: SendEmailOptions) {
+    await this.transporter.sendMail({
+      from: options.from ?? this.configService.get<string>('mailSender'),
+      to,
+      subject: options.subject,
+      html: options.contentType === 'html' ? content : undefined,
+      text: options.contentType === 'plain' ? content : undefined,
+    });
+  }
+
+  async createSendEmailJob(data: SendEmailJobData) {
+    await this.sendEmailQueue.add('send-email', data, {
+      removeOnComplete: 1000,
+      removeOnFail: 5000,
+    });
+  }
+}
