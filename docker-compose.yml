@@ -27,14 +27,14 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-    se5_redis:
-      image: redis/redis-stack:latest
-      restart: always
-      ports:
-        - 6379:6379
-        - 8001:8001
-      volumes:
-        - redis_data:/data
+  se5_redis:
+    image: redis/redis-stack:latest
+    restart: always
+    ports:
+      - 6379:6379
+      - 8001:8001
+    volumes:
+      - redis_data:/data
   
 
 volumes:

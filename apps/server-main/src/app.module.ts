@@ -4,7 +4,10 @@ import * as path from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WeatherModule } from './domains/weather/weather.module';
+import { WeatherModule } from '@domains/weather/weather.module';
+import { SubscriptionsDomainModule } from '@/database/domains/subscriptions/subscriptions.domain-module';
+import { SubscriptionsModule } from '@domains/subscriptions/subscriptions.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -29,7 +32,20 @@ import { WeatherModule } from './domains/weather/weather.module';
       }),
     }),
 
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('redis.host'),
+          port: configService.get<number>('redis.port'),
+        },
+      }),
+    }),
+
     WeatherModule,
+    SubscriptionsDomainModule,
+    SubscriptionsModule,
   ],
 
   controllers: [],

@@ -19,5 +19,9 @@
       "@domains/*": ["src/domains/*"],
       "@commons/*": ["src/commons/*"],
     }
+  },
+  "include": ["src/**/*.ts", "scripts/*.ts", "scripts/*.js"],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
   }
 }
