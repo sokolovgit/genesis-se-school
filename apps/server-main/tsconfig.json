@@ -12,6 +12,12 @@
     "baseUrl": "./",
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["src/*"],
+      "@database/*": ["src/database/*"],
+      "@domains/*": ["src/domains/*"],
+      "@commons/*": ["src/commons/*"],
+    }
   }
 }
