@@ -1,7 +1,15 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  ValidationPipe,
+} from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 
 import { SubscribeDto } from './dtos/subscribe.dto';
+import { Uuid } from '@/commons';
 
 @Controller()
 export class SubscriptionsController {
@@ -16,5 +24,14 @@ export class SubscriptionsController {
     );
 
     return 'Subscription successful. Confirmation email sent.';
+  }
+
+  @Get('confirm/:token')
+  public async confirm(
+    @Param('token', new ValidationPipe({ transform: true })) token: Uuid,
+  ) {
+    await this.subscriptionsService.confirm(token);
+
+    return 'Subscription confirmed successfully.';
   }
 }

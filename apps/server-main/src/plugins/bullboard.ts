@@ -7,6 +7,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 
 import { Queue } from 'bullmq';
 import { EmailsQueue } from '@/domains/emails/emails.queue-definition';
+import { SubscriptionsQueue } from '@/domains/subscriptions/subscriptions.queue-definition';
 
 export const showBullBoard = (app: INestApplication): void => {
   const config = app.get(ConfigService);
@@ -22,12 +23,29 @@ export const showBullBoard = (app: INestApplication): void => {
     connection: redisConnection,
   });
 
+  const sendHourlyWeatherUpdatesQueue = new Queue(
+    SubscriptionsQueue.HourlyUpdates,
+    {
+      connection: redisConnection,
+    },
+  );
+  const sendDailyWeatherUpdatesQueue = new Queue(
+    SubscriptionsQueue.DailyUpdates,
+    {
+      connection: redisConnection,
+    },
+  );
+
   const serverAdapter = new ExpressAdapter();
 
   serverAdapter.setBasePath(`/${bullBoardPath}`);
 
   createBullBoard({
-    queues: [new BullMQAdapter(sendEmailsQueue)],
+    queues: [
+      new BullMQAdapter(sendEmailsQueue),
+      new BullMQAdapter(sendHourlyWeatherUpdatesQueue),
+      new BullMQAdapter(sendDailyWeatherUpdatesQueue),
+    ],
     serverAdapter,
   });
 

@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Subscription } from '../entities/subscribtion.entity';
 import { UpdatesFrequency } from '../enums/updates-frequency.enum';
-import { Uuid } from '@/commons';
+import { PaginationOptions, Uuid } from '@/commons';
 
 @Injectable()
 export class SubscriptionsRepository {
@@ -36,6 +36,40 @@ export class SubscriptionsRepository {
     if (!result) {
       return;
     }
+
+    return result;
+  }
+
+  async getActiveSubscriptionsCountByFrequency(frequency: UpdatesFrequency) {
+    const qb = this.subscriptionRepository.createQueryBuilder('subscription');
+
+    qb.leftJoinAndSelect('subscription.tokens', 'token');
+    qb.where('token.id IS NOT NULL');
+    qb.andWhere('token.isActivated = :isActivated', { isActivated: true });
+    qb.andWhere('subscription.frequency = :frequency', { frequency });
+
+    return await qb.getCount();
+  }
+
+  async getActiveSubscriptionsByFrequencyPaginated(
+    frequency: UpdatesFrequency,
+    paginationOptions: PaginationOptions,
+  ) {
+    const qb = this.subscriptionRepository.createQueryBuilder('subscription');
+    qb.leftJoinAndSelect('subscription.tokens', 'token');
+
+    qb.where('token.id IS NOT NULL');
+    qb.andWhere('token.isActivated = :isActivated', { isActivated: true });
+    qb.andWhere('subscription.frequency = :frequency', {
+      frequency: frequency,
+    });
+
+    qb.skip(paginationOptions.skip);
+    qb.take(paginationOptions.take);
+
+    qb.orderBy('subscription.createdAt', 'DESC');
+
+    const result = await qb.getMany();
 
     return result;
   }

@@ -26,7 +26,7 @@ export class WeatherService {
     this.apiKey = this.configService.get<string>('weatherApiKey');
   }
 
-  async getWeather(city: string): Promise<Weather> {
+  async getWeatherByCityName(city: string): Promise<Weather> {
     const wheatherData = await this.getWeatherDataOrThrow(city);
 
     return {

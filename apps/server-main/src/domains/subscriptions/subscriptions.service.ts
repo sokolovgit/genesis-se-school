@@ -1,4 +1,10 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { SubscriptionsRepository } from '@database/domains/subscriptions/repositories/subscriptions.repository';
 import { WeatherService } from '../weather/weather.service';
 import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
@@ -6,9 +12,14 @@ import { SubscriptionTokensRepository } from '@/database/domains/subscriptions/r
 import { EmailsService } from '../emails/emails.service';
 import { Uuid } from '@/commons';
 import { Subscription } from '@/database/domains/subscriptions/entities/subscribtion.entity';
+import { Weather } from '../weather/interfaces/weather.interface';
+
+const CHUNK_SIZE = 100;
 
 @Injectable()
 export class SubscriptionsService {
+  logger = new Logger(SubscriptionsService.name);
+
   constructor(
     private readonly emailsService: EmailsService,
     private readonly weatherService: WeatherService,
@@ -62,6 +73,68 @@ export class SubscriptionsService {
     });
   }
 
+  async confirm(token: Uuid) {
+    const subscriptionToken =
+      await this.subscriptionTokensRepository.findInactiveTokenWithSubscriptionByTokenId(
+        token,
+      );
+
+    if (!subscriptionToken) {
+      throw new NotFoundException('Token not found');
+    }
+
+    const isLastToken =
+      await this.subscriptionTokensRepository.isLastTokenForSubscriptionByTokenId(
+        token,
+      );
+
+    if (!isLastToken) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    await this.subscriptionTokensRepository.setTokenStateActivatedByTokenId(
+      token,
+    );
+  }
+
+  async sendWeatherUpdates(frequency: UpdatesFrequency) {
+    const activeSubscriptionsCount =
+      await this.subscriptionsRepository.getActiveSubscriptionsCountByFrequency(
+        frequency,
+      );
+
+    for (let i = 0; i < activeSubscriptionsCount; i += CHUNK_SIZE) {
+      const subscriptions =
+        await this.subscriptionsRepository.getActiveSubscriptionsByFrequencyPaginated(
+          frequency,
+          {
+            skip: i,
+            take: CHUNK_SIZE,
+          },
+        );
+
+      const emailsPromises = subscriptions.map(async (subscription) => {
+        try {
+          const weatherData = await this.weatherService.getWeatherByCityName(
+            subscription.city,
+          );
+
+          await this.sendWeatherUpdateEmail(
+            subscription.email,
+            subscription.city,
+            weatherData,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to send weather update email to ${subscription.email}: ${error}`,
+          );
+        }
+      });
+
+      await Promise.all(emailsPromises);
+    }
+  }
+
   private async sendConfirmationEmail(
     email: string,
     data: {
@@ -84,6 +157,28 @@ export class SubscriptionsService {
     await this.emailsService.createSendEmailJob({
       to: email,
       subject: 'Confirm your subscription',
+      content,
+      contentType: 'html',
+    });
+  }
+
+  private async sendWeatherUpdateEmail(
+    email: string,
+    city: string,
+    weather: Weather,
+  ) {
+    const content = `
+      <h1>Weather Update</h1>
+      <p>City: ${city}</p>
+      
+      <p>Temperature: ${weather.temperature}°C</p>
+      <p>Humidity: ${weather.humidity}%</p>
+      <p>Weather Description: ${weather.weatherDescription}</p>
+      `;
+
+    await this.emailsService.createSendEmailJob({
+      to: email,
+      subject: 'Weather Update',
       content,
       contentType: 'html',
     });

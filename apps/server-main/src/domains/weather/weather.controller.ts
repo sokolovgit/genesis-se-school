@@ -13,7 +13,7 @@ export class WeatherController {
     @Query(new ValidationPipe({ transform: true }))
     getWeatherDto: GetWeatherDto,
   ) {
-    const weather = await this.weatherService.getWeather(getWeatherDto.city);
+    const weather = await this.weatherService.getWeatherByCityName(getWeatherDto.city);
 
     return new WeatherDto(weather);
   }
