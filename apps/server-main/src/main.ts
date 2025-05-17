@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { createDocument } from './plugins/swagger';
+import { showBullBoard } from './plugins/bullboard';
 
 async function bootstrap() {
   const logger = new Logger();
@@ -24,6 +25,12 @@ async function bootstrap() {
     createDocument(app);
   }
 
+  const isBullBoardEnabled = config.get<boolean>('bullboard.enabled');
+
+  if (isBullBoardEnabled) {
+    showBullBoard(app);
+  }
+
   await app.listen(port);
 
   const appUrl = await app.getUrl();
@@ -33,6 +40,11 @@ async function bootstrap() {
   if (isDocsEnabled) {
     const docsPath = config.get<string>('docs.path');
     logger.log(`📚 API Docs are available at: ${appUrl}/${docsPath}`);
+  }
+
+  if (isBullBoardEnabled) {
+    const bullBoardPath = config.get<string>('bullboard.path');
+    logger.log(`📊 Bull Board is available at: ${appUrl}/${bullBoardPath}`);
   }
 }
 
