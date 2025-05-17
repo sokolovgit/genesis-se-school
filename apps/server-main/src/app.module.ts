@@ -8,6 +8,7 @@ import { WeatherModule } from '@domains/weather/weather.module';
 import { SubscriptionsDomainModule } from '@/database/domains/subscriptions/subscriptions.domain-module';
 import { SubscriptionsModule } from '@domains/subscriptions/subscriptions.module';
 import { BullModule } from '@nestjs/bullmq';
+import { EmailsModule } from './domains/emails/emails.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { BullModule } from '@nestjs/bullmq';
       }),
     }),
 
+    EmailsModule,
     WeatherModule,
     SubscriptionsDomainModule,
     SubscriptionsModule,

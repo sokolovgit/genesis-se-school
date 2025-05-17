@@ -1,5 +1,5 @@
 import { AbstractEntity, Uuid } from '@/commons';
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Subscription } from './subscribtion.entity';
 
@@ -21,6 +21,12 @@ export class SubscriptionToken extends AbstractEntity {
   @JoinColumn({
     name: 'subscription_id',
   })
-  @OneToOne(() => Subscription, (subscription) => subscription.token)
+  @ManyToOne(
+    () => Subscription,
+    (subscription: Subscription) => subscription.tokens,
+    {
+      onDelete: 'CASCADE',
+    },
+  )
   subscription: Subscription;
 }

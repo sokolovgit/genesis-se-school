@@ -12,7 +12,7 @@ export class SubscriptionTokensRepository {
     private readonly subscriptionTokenRepository: Repository<SubscriptionToken>,
   ) {}
 
-  async createUnactivatedTokenBySubscriptionId(subscriptionId: Uuid) {
+  async createInactivatedTokenBySubscriptionId(subscriptionId: Uuid) {
     const subscriptionToken = this.subscriptionTokenRepository.create({
       subscriptionId: subscriptionId,
     });

@@ -1,5 +1,5 @@
 import { AbstractEntity } from '@/commons';
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 import { UpdatesFrequency } from '../enums/updates-frequency.enum';
 import { SubscriptionToken } from './subscription-token.entity';
@@ -26,9 +26,9 @@ export class Subscription extends AbstractEntity {
   })
   city: string;
 
-  @OneToOne(() => SubscriptionToken, (token) => token.subscription, {
+  @OneToMany(() => SubscriptionToken, (token) => token.subscription, {
     cascade: true,
     eager: true,
   })
-  token: SubscriptionToken;
+  tokens: SubscriptionToken[];
 }

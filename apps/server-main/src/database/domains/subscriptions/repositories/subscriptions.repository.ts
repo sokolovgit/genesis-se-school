@@ -25,10 +25,36 @@ export class SubscriptionsRepository {
   ): Promise<Subscription | undefined> {
     const qb = this.subscriptionRepository.createQueryBuilder('subscription');
 
-    qb.leftJoinAndSelect('subscription.token', 'token');
+    qb.leftJoinAndSelect('subscription.tokens', 'token');
     qb.where('subscription.email = :email', { email });
     qb.andWhere('subscription.city = :city', { city });
     qb.andWhere('token.id IS NOT NULL');
+    qb.andWhere('token.isActivated = :isActivated', { isActivated: true });
+
+    const result = await qb.getOne();
+
+    if (!result) {
+      return;
+    }
+
+    return result;
+  }
+
+  async findInactiveSubscription(
+    email: string,
+    city: string,
+    frequency: UpdatesFrequency,
+  ): Promise<Subscription | undefined> {
+    const qb = this.subscriptionRepository.createQueryBuilder('subscription');
+    qb.leftJoinAndSelect('subscription.tokens', 'token');
+    qb.where('subscription.email = :email', { email });
+    qb.andWhere('subscription.city = :city', { city });
+    qb.andWhere('subscription.frequency = :frequency', { frequency });
+    qb.andWhere('token.id IS NOT NULL');
+    qb.andWhere('token.isActivated = :isActivated', { isActivated: false });
+
+    qb.limit(1);
+    qb.orderBy('token.createdAt', 'DESC');
 
     const result = await qb.getOne();
 

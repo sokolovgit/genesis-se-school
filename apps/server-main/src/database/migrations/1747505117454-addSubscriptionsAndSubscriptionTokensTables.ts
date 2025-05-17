@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddSubscriptionsAndSubscriptionTokensTables1747498099053
+export class AddSubscriptionsAndSubscriptionTokensTables1747505117454
   implements MigrationInterface
 {
-  name = 'AddSubscriptionsAndSubscriptionTokensTables1747498099053';
+  name = 'AddSubscriptionsAndSubscriptionTokensTables1747505117454';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -33,13 +33,12 @@ export class AddSubscriptionsAndSubscriptionTokensTables1747498099053
                 "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
                 "isActivated" boolean NOT NULL DEFAULT false,
                 "subscription_id" uuid NOT NULL,
-                CONSTRAINT "REL_da23e109fce0c96f5fe63094c7" UNIQUE ("subscription_id"),
                 CONSTRAINT "PK_2dd83c1e48daf4a9b2e75e625d5" PRIMARY KEY ("id")
             )
         `);
     await queryRunner.query(`
             ALTER TABLE "subscription_tokens"
-            ADD CONSTRAINT "FK_da23e109fce0c96f5fe63094c75" FOREIGN KEY ("subscription_id") REFERENCES "subscriptions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+            ADD CONSTRAINT "FK_da23e109fce0c96f5fe63094c75" FOREIGN KEY ("subscription_id") REFERENCES "subscriptions"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `);
   }
 

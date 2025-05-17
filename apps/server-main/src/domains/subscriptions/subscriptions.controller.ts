@@ -9,6 +9,12 @@ export class SubscriptionsController {
 
   @Post('subscribe')
   public async subscribe(@Body() subscribeDto: SubscribeDto) {
-    return subscribeDto;
+    await this.subscriptionsService.subscribe(
+      subscribeDto.email,
+      subscribeDto.city,
+      subscribeDto.frequency,
+    );
+
+    return 'Subscription successful. Confirmation email sent.';
   }
 }

@@ -39,9 +39,9 @@ export class WeatherService {
   async getValidCityNameOrThrow(city: string) {
     const weatherData = await this.getWeatherDataOrThrow(city);
 
-    const foundCity = weatherData.location.name.toLowerCase();
+    const foundCity = weatherData.location.name;
 
-    const isSameCity = foundCity !== city.toLowerCase();
+    const isSameCity = foundCity.toLowerCase() === city.toLowerCase();
 
     if (!isSameCity) {
       throw new BadRequestException('Invalid input');
