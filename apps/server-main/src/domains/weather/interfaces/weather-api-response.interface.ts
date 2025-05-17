@@ -1,4 +1,5 @@
 export interface CurrentWeatherApiResponse {
+  location: Location;
   current: Current;
 }
 
@@ -17,4 +18,8 @@ interface Current {
 
 interface Condition {
   text: string;
+}
+
+interface Location {
+  name: string;
 }
