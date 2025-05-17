@@ -35,6 +35,13 @@ services:
       - 8001:8001
     volumes:
       - redis_data:/data
+
+  se5_mailhog:
+    image: mailhog/mailhog
+    restart: always 
+    ports:
+      - '1025:1025'
+      - '8025:8025'
   
 
 volumes:
