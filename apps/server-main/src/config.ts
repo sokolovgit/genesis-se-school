@@ -10,4 +10,6 @@ export default () => ({
     url: process.env.DATABASE_URL,
     logging: process.env.DATABASE_LOGGING === 'true',
   },
+
+  weatherApiKey: process.env.WEATHER_API_KEY,
 });
