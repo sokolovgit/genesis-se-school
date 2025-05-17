@@ -26,8 +26,18 @@ services:
       - se5_postgres
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+
+    se5_redis:
+      image: redis/redis-stack:latest
+      restart: always
+      ports:
+        - 6379:6379
+        - 8001:8001
+      volumes:
+        - redis_data:/data
   
 
 volumes:
   pgdata:
   pgadmin_data:
+  redis_data:
