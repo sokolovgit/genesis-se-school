@@ -21,5 +21,15 @@ export default () => ({
     logging: process.env.DATABASE_LOGGING === 'true',
   },
 
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: process.env.SMTP_SECURE === 'true',
+    username: process.env.SMTP_USERNAME,
+    password: process.env.SMTP_PASSWORD,
+  },
+
+  mailSender: process.env.MAIL_SENDER,
+
   weatherApiKey: process.env.WEATHER_API_KEY,
 });
