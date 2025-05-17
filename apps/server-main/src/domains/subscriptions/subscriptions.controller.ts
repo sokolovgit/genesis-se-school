@@ -1,15 +1,15 @@
 import {
-  Body,
-  Controller,
   Get,
-  Param,
+  Body,
   Post,
-  ValidationPipe,
+  Param,
+  Controller,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import { SubscriptionsService } from './subscriptions.service';
+import { Uuid } from '@/commons';
 
 import { SubscribeDto } from './dtos/subscribe.dto';
-import { Uuid } from '@/commons';
+import { SubscriptionsService } from './subscriptions.service';
 
 @Controller()
 export class SubscriptionsController {
@@ -27,11 +27,14 @@ export class SubscriptionsController {
   }
 
   @Get('confirm/:token')
-  public async confirm(
-    @Param('token', new ValidationPipe({ transform: true })) token: Uuid,
-  ) {
+  public async confirm(@Param('token', new ParseUUIDPipe()) token: Uuid) {
     await this.subscriptionsService.confirm(token);
-
     return 'Subscription confirmed successfully.';
+  }
+
+  @Get('unsubscribe/:token')
+  public async unsubscribe(@Param('token', new ParseUUIDPipe()) token: Uuid) {
+    await this.subscriptionsService.unsubscribe(token);
+    return 'Unsubscribed successfully.';
   }
 }

@@ -97,6 +97,25 @@ export class SubscriptionsService {
     );
   }
 
+  async unsubscribe(token: Uuid) {
+    const subscriptionToken =
+      await this.subscriptionTokensRepository.findByTokenIdWithSubscription(
+        token,
+      );
+
+    if (!subscriptionToken) {
+      throw new NotFoundException('Token not found');
+    }
+
+    if (!subscriptionToken.isActivated) {
+      throw new BadRequestException('Invalid token');
+    }
+
+    await this.subscriptionTokensRepository.setTokenStateDeactivatedByTokenId(
+      token,
+    );
+  }
+
   async sendWeatherUpdates(frequency: UpdatesFrequency) {
     const activeSubscriptionsCount =
       await this.subscriptionsRepository.getActiveSubscriptionsCountByFrequency(

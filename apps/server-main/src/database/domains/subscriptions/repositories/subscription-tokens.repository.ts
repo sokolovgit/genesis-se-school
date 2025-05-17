@@ -20,6 +20,19 @@ export class SubscriptionTokensRepository {
     });
   }
 
+  async findByTokenIdWithSubscription(
+    tokenId: Uuid,
+  ): Promise<SubscriptionToken> {
+    return await this.subscriptionTokenRepository.findOne({
+      where: {
+        id: tokenId,
+      },
+      relations: {
+        subscription: true,
+      },
+    });
+  }
+
   async createInactivatedTokenBySubscriptionId(subscriptionId: Uuid) {
     const subscriptionToken = this.subscriptionTokenRepository.create({
       subscriptionId: subscriptionId,
@@ -68,6 +81,16 @@ export class SubscriptionTokensRepository {
       { isActivated: true },
     );
 
+    return await this.findByTokenId(tokenId);
+  }
+
+  async setTokenStateDeactivatedByTokenId(
+    tokenId: Uuid,
+  ): Promise<SubscriptionToken> {
+    await this.subscriptionTokenRepository.update(
+      { id: tokenId },
+      { isActivated: false },
+    );
     return await this.findByTokenId(tokenId);
   }
 }
