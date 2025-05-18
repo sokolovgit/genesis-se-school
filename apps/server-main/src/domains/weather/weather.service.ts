@@ -3,7 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
   Inject,
-  Logger,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -68,19 +67,15 @@ export class WeatherService {
   private async getWeatherDataOrThrow(
     city: string,
   ): Promise<CurrentWeatherApiResponse> {
-    const logger = new Logger(WeatherService.name);
     const cacheKey = `weather:${city.toLowerCase()}`;
-    logger.log(`Cache key: ${cacheKey}`);
 
     const cached =
       await this.cacheManager.get<CurrentWeatherApiResponse>(cacheKey);
     if (cached) {
-      logger.log(`Cache hit for city: ${city}`);
       return cached;
     }
 
     if (this.inFlightRequests.has(cacheKey)) {
-      logger.log(`Waiting for in-flight request for city: ${city}`);
       return this.inFlightRequests.get(cacheKey);
     }
 
