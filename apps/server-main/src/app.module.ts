@@ -29,7 +29,7 @@ import { createKeyv } from '@keyv/redis';
           path.resolve(__dirname, 'database/domains/**/*.entity.{js,ts}'),
         ],
         migrations: [path.resolve(__dirname, 'database/migrations/*.{js,ts}')],
-        migrationsRun: false,
+        migrationsRun: configService.get('database.migrationsRun'),
         logging: configService.get('database.logging'),
         synchronize: false,
       }),
@@ -40,8 +40,7 @@ import { createKeyv } from '@keyv/redis';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: {
-          host: configService.get<string>('redis.host'),
-          port: configService.get<number>('redis.port'),
+          url: configService.get('redis.url'),
         },
       }),
     }),
@@ -53,9 +52,9 @@ import { createKeyv } from '@keyv/redis';
       useFactory: (configService: ConfigService) => {
         return {
           stores: [
-            createKeyv(
-              `redis://${configService.get('redis.host')}:${configService.get('redis.port')}`,
-            ),
+            createKeyv({
+              url: configService.get('redis.url'),
+            }),
           ],
         };
       },

@@ -25,6 +25,7 @@ export class EmailsService {
       host: this.configService.get<string>('smtp.host'),
       port: this.configService.get<number>('smtp.port'),
       secure: this.configService.get<boolean>('smtp.secure'),
+      requireTLS: this.configService.get<boolean>('smtp.requireTLS'),
       auth:
         username && password
           ? {
