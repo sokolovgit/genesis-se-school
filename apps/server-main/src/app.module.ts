@@ -9,6 +9,8 @@ import { SubscriptionsDomainModule } from '@/database/domains/subscriptions/subs
 import { SubscriptionsModule } from '@domains/subscriptions/subscriptions.module';
 import { BullModule } from '@nestjs/bullmq';
 import { EmailsModule } from './domains/emails/emails.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import { createKeyv } from '@keyv/redis';
 
 @Module({
   imports: [
@@ -42,6 +44,21 @@ import { EmailsModule } from './domains/emails/emails.module';
           port: configService.get<number>('redis.port'),
         },
       }),
+    }),
+
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          stores: [
+            createKeyv(
+              `redis://${configService.get('redis.host')}:${configService.get('redis.port')}`,
+            ),
+          ],
+        };
+      },
     }),
 
     EmailsModule,
