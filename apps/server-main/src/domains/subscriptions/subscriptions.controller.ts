@@ -3,6 +3,7 @@ import {
   Body,
   Post,
   Param,
+  HttpCode,
   Controller,
   ParseUUIDPipe,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Post('subscribe')
+  @HttpCode(200)
   public async subscribe(@Body() subscribeDto: SubscribeDto) {
     await this.subscriptionsService.subscribe(
       subscribeDto.email,
