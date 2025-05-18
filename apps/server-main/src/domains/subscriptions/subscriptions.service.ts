@@ -120,40 +120,40 @@ export class SubscriptionsService {
   }
 
   async sendWeatherUpdates(frequency: UpdatesFrequency) {
-    const activeSubscriptionsCount =
-      await this.subscriptionsRepository.getActiveSubscriptionsCountByFrequency(
+    const totalEmails =
+      await this.subscriptionsRepository.getGroupedActiveSubscriptionsCount(
         frequency,
       );
 
-    for (let i = 0; i < activeSubscriptionsCount; i += CHUNK_SIZE) {
-      const subscriptions =
-        await this.subscriptionsRepository.getActiveSubscriptionsByFrequencyPaginated(
+    for (let i = 0; i < totalEmails; i += CHUNK_SIZE) {
+      const groupedSubscriptions =
+        await this.subscriptionsRepository.getGroupedActiveSubscriptionsByFrequencyPaginated(
           frequency,
-          {
-            skip: i,
-            take: CHUNK_SIZE,
-          },
+          { skip: i, take: CHUNK_SIZE },
         );
 
-      const emailsPromises = subscriptions.map(async (subscription) => {
-        try {
-          const weatherData = await this.weatherService.getWeatherByCityName(
-            subscription.city,
-          );
+      const emailPromises = groupedSubscriptions.map(
+        async ({ email, cities }) => {
+          try {
+            const weatherReports = await Promise.all(
+              cities.map((city: string) =>
+                this.weatherService.getWeatherByCityName(city).then((data) => ({
+                  city,
+                  weather: data,
+                })),
+              ),
+            );
 
-          await this.sendWeatherUpdateEmail(
-            subscription.email,
-            subscription.city,
-            weatherData,
-          );
-        } catch (error) {
-          this.logger.error(
-            `Failed to send weather update email to ${subscription.email}: ${error}`,
-          );
-        }
-      });
+            await this.sendCombinedWeatherUpdateEmail(email, weatherReports);
+          } catch (error) {
+            this.logger.error(
+              `Failed to send weather update email to ${email}: ${error}`,
+            );
+          }
+        },
+      );
 
-      await Promise.all(emailsPromises);
+      await Promise.all(emailPromises);
     }
   }
 
@@ -184,23 +184,32 @@ export class SubscriptionsService {
     });
   }
 
-  private async sendWeatherUpdateEmail(
+  private async sendCombinedWeatherUpdateEmail(
     email: string,
-    city: string,
-    weather: Weather,
+    weatherReports: { city: string; weather: Weather }[],
   ) {
+    const weatherSections = weatherReports
+      .map(
+        ({ city, weather }) => `
+          <h2>${city}</h2>
+          <ul>
+            <li><strong>Temperature:</strong> ${weather.temperature}°C</li>
+            <li><strong>Humidity:</strong> ${weather.humidity}%</li>
+            <li><strong>Description:</strong> ${weather.weatherDescription}</li>
+          </ul>
+        `,
+      )
+      .join('');
+
     const content = `
-      <h1>Weather Update</h1>
-      <p>City: ${city}</p>
-      
-      <p>Temperature: ${weather.temperature}°C</p>
-      <p>Humidity: ${weather.humidity}%</p>
-      <p>Weather Description: ${weather.weatherDescription}</p>
-      `;
+      <h1>Weather Updates</h1>
+      <p>Here are the latest weather updates for your subscribed cities:</p>
+      ${weatherSections}
+    `;
 
     await this.emailsService.createSendEmailJob({
       to: email,
-      subject: 'Weather Update',
+      subject: 'Your Weather Updates',
       content,
       contentType: 'html',
     });

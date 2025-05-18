@@ -51,27 +51,42 @@ export class SubscriptionsRepository {
     return await qb.getCount();
   }
 
-  async getActiveSubscriptionsByFrequencyPaginated(
+  async getGroupedActiveSubscriptionsByFrequencyPaginated(
     frequency: UpdatesFrequency,
     paginationOptions: PaginationOptions,
   ) {
-    const qb = this.subscriptionRepository.createQueryBuilder('subscription');
-    qb.leftJoinAndSelect('subscription.tokens', 'token');
+    const qb = this.subscriptionRepository
+      .createQueryBuilder('subscription')
+      .leftJoin('subscription.tokens', 'token')
+      .select([
+        'subscription.email AS email',
+        'json_agg(subscription.city) AS cities',
+      ])
+      .where('token.id IS NOT NULL')
+      .andWhere('token.isActivated = true')
+      .andWhere('subscription.frequency = :frequency', { frequency })
+      .groupBy('subscription.email')
+      .orderBy('MIN(subscription.createdAt)', 'DESC')
+      .skip(paginationOptions.skip)
+      .take(paginationOptions.take);
 
-    qb.where('token.id IS NOT NULL');
-    qb.andWhere('token.isActivated = :isActivated', { isActivated: true });
-    qb.andWhere('subscription.frequency = :frequency', {
-      frequency: frequency,
-    });
+    const rawResults: Array<{ email: string; cities: string[] }> =
+      await qb.getRawMany();
 
-    qb.skip(paginationOptions.skip);
-    qb.take(paginationOptions.take);
+    return rawResults;
+  }
 
-    qb.orderBy('subscription.createdAt', 'DESC');
+  async getGroupedActiveSubscriptionsCount(frequency: UpdatesFrequency) {
+    const qb = this.subscriptionRepository
+      .createQueryBuilder('subscription')
+      .leftJoin('subscription.tokens', 'token')
+      .where('token.id IS NOT NULL')
+      .andWhere('token.isActivated = true')
+      .andWhere('subscription.frequency = :frequency', { frequency })
+      .select('COUNT(DISTINCT subscription.email)', 'count');
 
-    const result = await qb.getMany();
-
-    return result;
+    const result: { count: string } | undefined = await qb.getRawOne();
+    return result ? parseInt(result.count, 10) : 0;
   }
 
   async findInactiveSubscription(
