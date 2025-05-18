@@ -1,8 +1,9 @@
-import { INestApplication } from '@nestjs/common';
 import * as YAML from 'yamljs';
 import * as SwaggerUI from 'swagger-ui-express';
 import * as path from 'path';
+
 import { ConfigService } from '@nestjs/config';
+import { INestApplication } from '@nestjs/common';
 
 export const createDocument = (app: INestApplication) => {
   const config = app.get(ConfigService);

@@ -1,4 +1,5 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+
 import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
 
 export class SubscribeDto {

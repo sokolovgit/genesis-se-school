@@ -1,18 +1,21 @@
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
   Logger,
+  Injectable,
+  ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-import { SubscriptionsRepository } from '@database/domains/subscriptions/repositories/subscriptions.repository';
-import { WeatherService } from '../weather/weather.service';
-import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
-import { SubscriptionTokensRepository } from '@/database/domains/subscriptions/repositories/subscription-tokens.repository';
-import { EmailsService } from '../emails/emails.service';
 import { Uuid } from '@/commons';
-import { Subscription } from '@/database/domains/subscriptions/entities/subscribtion.entity';
+import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
+
+import { SubscriptionsRepository } from '@database/domains/subscriptions/repositories/subscriptions.repository';
+import { SubscriptionTokensRepository } from '@/database/domains/subscriptions/repositories/subscription-tokens.repository';
+
+import { EmailsService } from '../emails/emails.service';
+import { WeatherService } from '../weather/weather.service';
+
 import { Weather } from '../weather/interfaces/weather.interface';
+import { Subscription } from '@/database/domains/subscriptions/entities/subscribtion.entity';
 
 const CHUNK_SIZE = 100;
 

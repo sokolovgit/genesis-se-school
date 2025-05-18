@@ -1,7 +1,7 @@
-import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { SubscriptionsQueue } from './subscriptions.queue-definition';
 import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
+import { SubscriptionsQueue } from './subscriptions.queue-definition';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 
 @Injectable()
 export class SubscriptionsHourlyUpdatesInitService implements OnModuleInit {

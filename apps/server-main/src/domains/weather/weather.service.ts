@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { Weather } from './interfaces/weather.interface';
+
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
+
 import {
   WeatherApiError,
   CurrentWeatherApiResponse,
 } from './interfaces/weather-api-response.interface';
+import { Weather } from './interfaces/weather.interface';
 
 const WEATHER_API_BASE_URL = 'https://api.weatherapi.com/v1/current.json';
 

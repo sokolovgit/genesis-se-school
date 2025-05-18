@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createTransport, Transporter } from 'nodemailer';
-import { SendEmailOptions } from './interfaces/send-email-options.interface';
-import { InjectQueue } from '@nestjs/bullmq';
-import { EmailsQueue } from './emails.queue-definition';
-import { SendEmailJobData } from './interfaces/send-email.job-data.interface';
 import { Queue } from 'bullmq';
+import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
+
+import { createTransport, Transporter } from 'nodemailer';
+
+import { EmailsQueue } from './emails.queue-definition';
+import { SendEmailOptions } from './interfaces/send-email-options.interface';
+import { SendEmailJobData } from './interfaces/send-email.job-data.interface';
 
 @Injectable()
 export class EmailsService {

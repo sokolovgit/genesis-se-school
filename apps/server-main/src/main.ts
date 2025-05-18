@@ -1,9 +1,9 @@
-import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import { createDocument } from './plugins/swagger';
 import { showBullBoard } from './plugins/bullboard';
+import { createDocument } from './plugins/swagger';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const logger = new Logger();

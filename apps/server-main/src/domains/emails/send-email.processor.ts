@@ -1,8 +1,10 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { EmailsQueue } from './emails.queue-definition';
 import { Job } from 'bullmq';
-import { SendEmailJobData } from './interfaces/send-email.job-data.interface';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+
+import { EmailsQueue } from './emails.queue-definition';
 import { EmailsService } from './emails.service';
+
+import { SendEmailJobData } from './interfaces/send-email.job-data.interface';
 
 @Processor(EmailsQueue.SendEmail)
 export class SendEmailProcessor extends WorkerHost {

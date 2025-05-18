@@ -1,5 +1,5 @@
-import config from './config';
 import * as path from 'path';
+import config from './config';
 
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';

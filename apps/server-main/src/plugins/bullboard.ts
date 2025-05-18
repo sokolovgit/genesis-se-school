@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
+import { createBullBoard } from '@bull-board/api';
 import { INestApplication } from '@nestjs/common';
 
-import { createBullBoard } from '@bull-board/api';
-import { ExpressAdapter } from '@bull-board/express';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { ExpressAdapter } from '@bull-board/express';
 
 import { Queue } from 'bullmq';
 import { EmailsQueue } from '@/domains/emails/emails.queue-definition';
