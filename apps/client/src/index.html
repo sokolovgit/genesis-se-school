@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Subscribe to Weather Updates</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f3;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-top: 1rem;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.3rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 1.5rem;
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .message {
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Subscribe to Weather Updates</h2>
+        <form id="subscription-form">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" required>
+
+            <label for="frequency">Frequency</label>
+            <select id="frequency" name="frequency" required>
+                <option value="">Select frequency</option>
+                <option value="hourly">Hourly</option>
+                <option value="daily">Daily</option>
+            </select>
+
+            <button type="submit">Subscribe</button>
+            <div class="message" id="message"></div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('subscription-form');
+        const messageEl = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageEl.textContent = '';
+
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/subscribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: params
+                });
+
+                if (response.status === 200) {
+                    messageEl.style.color = 'green';
+                    messageEl.textContent = 'Subscription successful! Check your email for confirmation.';
+                    form.reset();
+                } else if (response.status === 409) {
+                    messageEl.style.color = 'orange';
+                    messageEl.textContent = 'You are already subscribed with this email.';
+                } else {
+                    messageEl.style.color = 'red';
+                    messageEl.textContent = 'Subscription failed. Please check your inputs.';
+                }
+            } catch (err) {
+                messageEl.style.color = 'red';
+                messageEl.textContent = 'An error occurred. Please try again later.';
+            }
+        });
+    </script>
+
+</body>
+
+</html>
