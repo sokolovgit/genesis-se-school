@@ -1,6 +1,8 @@
 export default () => ({
   port: process.env.PORT,
 
+  deployedUrl: process.env.DEPLOYED_URL,
+
   docs: {
     enabled: process.env.DOCS_ENABLED === 'true' || false,
     path: process.env.DOCS_PATH || 'docs',
