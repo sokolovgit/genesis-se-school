@@ -24,7 +24,8 @@
     "db:migration:format": "eslint --fix ./src/database/migrations",
     "db:migration:generate": "node ./scripts/generate-migration",
     "db:migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./data-source.ts",
-    "db:migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./data-source.ts"
+    "db:migration:run": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./data-source.ts",
+    "db:migration:run:dist": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./dist/data-source.js"
   },
   "engines": {
     "npm": ">=10.0.0",
@@ -64,6 +65,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
+    "@flydotio/dockerfile": "^0.7.10",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",

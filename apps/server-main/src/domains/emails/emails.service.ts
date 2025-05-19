@@ -25,6 +25,7 @@ export class EmailsService {
       host: this.configService.get<string>('smtp.host'),
       port: this.configService.get<number>('smtp.port'),
       secure: this.configService.get<boolean>('smtp.secure'),
+      requireTLS: this.configService.get<boolean>('smtp.requireTLS'),
       auth:
         username && password
           ? {
@@ -47,8 +48,29 @@ export class EmailsService {
 
   async createSendEmailJob(data: SendEmailJobData) {
     await this.sendEmailQueue.add('send-email', data, {
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
       removeOnComplete: 1000,
       removeOnFail: 5000,
     });
+  }
+
+  async createSendEmailJobsBulk(data: SendEmailJobData[]) {
+    await this.sendEmailQueue.addBulk(
+      data.map((job) => ({
+        name: 'send-email',
+        data: job,
+        opts: {
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+          removeOnComplete: 1000,
+          removeOnFail: 5000,
+        },
+      })),
+    );
   }
 }

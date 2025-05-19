@@ -1,0 +1,32 @@
+# fly.toml app configuration file generated for weather-app-se5 on 2025-05-18T22:23:58+03:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'weather-app-se5'
+primary_region = 'otp'
+
+[build]
+  dockerfile = "Dockerfile"
+  buld-target = "production"
+  context = "apps/server-main"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+
+[env]
+  PORT=3000
+  DEPLOYED_URL=https://weather-app-se5.fly.dev/api
+  DB_MIGRATE=true
+  DOCS_ENABLED=false
+  BULLBOARD_ENABLED=false

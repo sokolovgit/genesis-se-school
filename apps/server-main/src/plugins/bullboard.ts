@@ -36,6 +36,13 @@ export const showBullBoard = (app: INestApplication): void => {
     },
   );
 
+  const processWeatherUpdateChunkQueue = new Queue(
+    SubscriptionsQueue.ProcessWeatherUpdateChunk,
+    {
+      connection: redisConnection,
+    },
+  );
+
   const serverAdapter = new ExpressAdapter();
 
   serverAdapter.setBasePath(`/${bullBoardPath}`);
@@ -45,6 +52,7 @@ export const showBullBoard = (app: INestApplication): void => {
       new BullMQAdapter(sendEmailsQueue),
       new BullMQAdapter(sendHourlyWeatherUpdatesQueue),
       new BullMQAdapter(sendDailyWeatherUpdatesQueue),
+      new BullMQAdapter(processWeatherUpdateChunkQueue),
     ],
     serverAdapter,
   });

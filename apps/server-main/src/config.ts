@@ -1,6 +1,8 @@
 export default () => ({
   port: process.env.PORT,
 
+  deployedUrl: process.env.DEPLOYED_URL,
+
   docs: {
     enabled: process.env.DOCS_ENABLED === 'true' || false,
     path: process.env.DOCS_PATH || 'docs',
@@ -12,19 +14,20 @@ export default () => ({
   },
 
   redis: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
+    url: process.env.REDIS_URL,
   },
 
   database: {
     url: process.env.DATABASE_URL,
     logging: process.env.DATABASE_LOGGING === 'true',
+    migrationsRun: process.env.DB_MIGRATE === 'true',
   },
 
   smtp: {
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     secure: process.env.SMTP_SECURE === 'true',
+    requireTLS: process.env.SMTP_REQUIRE_TLS === 'true',
     username: process.env.SMTP_USERNAME,
     password: process.env.SMTP_PASSWORD,
   },
