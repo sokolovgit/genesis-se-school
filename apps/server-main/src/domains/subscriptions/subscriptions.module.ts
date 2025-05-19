@@ -12,6 +12,7 @@ import { SubscriptionsQueue } from './subscriptions.queue-definition';
 
 import { SendDailyUpdatesProcessor } from './processors/send-daily-updates.processor';
 import { SendHourlyUpdatesProcessor } from './processors/send-hourly-updates.processor';
+import { ProcessWeatherUpdateChunkProcessor } from './processors/process-weather-update-chunk.processor';
 
 @Module({
   imports: [
@@ -24,6 +25,9 @@ import { SendHourlyUpdatesProcessor } from './processors/send-hourly-updates.pro
       {
         name: SubscriptionsQueue.HourlyUpdates,
       },
+      {
+        name: SubscriptionsQueue.ProcessWeatherUpdateChunk,
+      },
     ),
   ],
   controllers: [SubscriptionsController],
@@ -33,6 +37,7 @@ import { SendHourlyUpdatesProcessor } from './processors/send-hourly-updates.pro
     SubscriptionsHourlyUpdatesInitService,
     SendDailyUpdatesProcessor,
     SendHourlyUpdatesProcessor,
+    ProcessWeatherUpdateChunkProcessor,
   ],
   exports: [],
 })

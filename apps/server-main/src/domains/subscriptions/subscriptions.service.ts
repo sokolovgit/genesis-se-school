@@ -1,21 +1,26 @@
 import {
   Logger,
   Injectable,
-  ConflictException,
   NotFoundException,
+  ConflictException,
   BadRequestException,
 } from '@nestjs/common';
 import { Uuid } from '@/commons';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
 
 import { SubscriptionsRepository } from '@database/domains/subscriptions/repositories/subscriptions.repository';
 import { SubscriptionTokensRepository } from '@/database/domains/subscriptions/repositories/subscription-tokens.repository';
 
+import { ConfigService } from '@nestjs/config';
 import { EmailsService } from '../emails/emails.service';
 import { WeatherService } from '../weather/weather.service';
 
 import { Weather } from '../weather/interfaces/weather.interface';
 import { Subscription } from '@/database/domains/subscriptions/entities/subscribtion.entity';
+import { SubscriptionsQueue } from './subscriptions.queue-definition';
+import { ProcessWeatherUpdateChunkJobData } from './interfaces/process-weather-update-chunk.job-data.interface';
 
 const CHUNK_SIZE = 100;
 
@@ -24,10 +29,15 @@ export class SubscriptionsService {
   logger = new Logger(SubscriptionsService.name);
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly emailsService: EmailsService,
     private readonly weatherService: WeatherService,
+
     private readonly subscriptionsRepository: SubscriptionsRepository,
     private readonly subscriptionTokensRepository: SubscriptionTokensRepository,
+
+    @InjectQueue(SubscriptionsQueue.ProcessWeatherUpdateChunk)
+    private readonly processWeatherUpdateChunkQueue: Queue<ProcessWeatherUpdateChunkJobData>,
   ) {}
 
   async subscribe(email: string, city: string, frequency: UpdatesFrequency) {
@@ -69,7 +79,7 @@ export class SubscriptionsService {
         subscription.id,
       );
 
-    await this.sendConfirmationEmail(email, {
+    await this.addSendConfirmationEmailJob(email, {
       token: subscriptionToken.id,
       city: checkedCityName,
       frequency,
@@ -120,44 +130,108 @@ export class SubscriptionsService {
   }
 
   async sendWeatherUpdates(frequency: UpdatesFrequency) {
-    const totalEmails =
+    const totalSubscriptions =
       await this.subscriptionsRepository.getGroupedActiveSubscriptionsCount(
         frequency,
       );
 
-    for (let i = 0; i < totalEmails; i += CHUNK_SIZE) {
-      const groupedSubscriptions =
-        await this.subscriptionsRepository.getGroupedActiveSubscriptionsByFrequencyPaginated(
-          frequency,
-          { skip: i, take: CHUNK_SIZE },
-        );
+    for (let i = 0; i < totalSubscriptions; i += CHUNK_SIZE) {
+      const skip = i;
+      const take = Math.min(CHUNK_SIZE, totalSubscriptions - i);
 
-      const emailPromises = groupedSubscriptions.map(
-        async ({ email, cities }) => {
-          try {
-            const weatherReports = await Promise.all(
-              cities.map((city: string) =>
-                this.weatherService.getWeatherByCityName(city).then((data) => ({
-                  city,
-                  weather: data,
-                })),
-              ),
-            );
-
-            await this.sendCombinedWeatherUpdateEmail(email, weatherReports);
-          } catch (error) {
-            this.logger.error(
-              `Failed to send weather update email to ${email}: ${error}`,
-            );
-          }
-        },
-      );
-
-      await Promise.all(emailPromises);
+      await this.addProcessWeatherUpdateChunkJob(frequency, skip, take);
     }
   }
 
-  private async sendConfirmationEmail(
+  async processWeatherUpdateChunk(
+    frequency: UpdatesFrequency,
+    skip: number,
+    take: number,
+  ) {
+    const groupedSubscriptions =
+      await this.subscriptionsRepository.getGroupedActiveSubscriptionsByFrequencyPaginated(
+        frequency,
+        { skip, take },
+      );
+
+    const jobsData: {
+      email: string;
+      weatherReports: {
+        city: string;
+        weather: Weather;
+      }[];
+    }[] = [];
+
+    await Promise.all(
+      groupedSubscriptions.map(async ({ email, cities }) => {
+        try {
+          const weatherResults = await Promise.allSettled(
+            cities.map((city: string) =>
+              this.weatherService.getWeatherByCityName(city).then((data) => ({
+                city,
+                weather: data,
+              })),
+            ),
+          );
+
+          const fulfilledReports = weatherResults
+            .filter(
+              (
+                result,
+              ): result is PromiseFulfilledResult<{
+                city: string;
+                weather: Weather;
+              }> => result.status === 'fulfilled',
+            )
+            .map((result) => result.value);
+
+          weatherResults
+            .filter((result) => result.status === 'rejected')
+            .forEach((result, index) => {
+              this.logger.error(
+                `Failed to fetch weather for ${cities[index]}: ${result.reason}`,
+              );
+            });
+
+          if (fulfilledReports.length === 0) return;
+
+          jobsData.push({
+            email,
+            weatherReports: fulfilledReports,
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to process weather update for ${email}: ${error}`,
+          );
+        }
+      }),
+    );
+
+    if (jobsData.length > 0) {
+      await this.addSendCombinedWeatherUpdateEmailJobsBulk(jobsData);
+    }
+  }
+
+  private buildConfirmationEmailContent(
+    city: string,
+    token: Uuid,
+    frequency: UpdatesFrequency,
+  ) {
+    const appUrl = this.configService.get<string>('deployedUrl');
+
+    return `
+      <h1>Confirm your subscription</h1>
+      <p>Click the link below to confirm your subscription:</p>
+      <h2>token: ${token}</h1>
+      <h2>Link: <a href="${appUrl}/confirm/${token}">Confirm Subscription</a></h2>
+      <p>City: ${city}</p>
+      <p>Frequency: ${frequency}</p>
+      
+      <p>If you didn't subscribe, you can ignore this email.</p>
+    `;
+  }
+
+  private async addSendConfirmationEmailJob(
     email: string,
     data: {
       token: Uuid;
@@ -165,16 +239,11 @@ export class SubscriptionsService {
       frequency: UpdatesFrequency;
     },
   ) {
-    const content = `
-      <h1>Confirm your subscription</h1>
-      <p>Click the link below to confirm your subscription:</p>
-      <h2>token: ${data.token}</h1>
-      <h2>Link: <a href="${'localhost:3000/api'}/confirm/${data.token}">Confirm Subscription</a></h2>
-      <p>City: ${data.city}</p>
-      <p>Frequency: ${data.frequency}</p>
-      
-      <p>If you didn't subscribe, you can ignore this email.</p>
-      `;
+    const content = this.buildConfirmationEmailContent(
+      data.city,
+      data.token,
+      data.frequency,
+    );
 
     await this.emailsService.createSendEmailJob({
       to: email,
@@ -184,34 +253,59 @@ export class SubscriptionsService {
     });
   }
 
-  private async sendCombinedWeatherUpdateEmail(
-    email: string,
-    weatherReports: { city: string; weather: Weather }[],
+  private buildWeatherUpdateContent(
+    weatherReports: {
+      city: string;
+      weather: Weather;
+    }[],
   ) {
-    const weatherSections = weatherReports
+    return weatherReports
       .map(
         ({ city, weather }) => `
-          <h2>${city}</h2>
-          <ul>
-            <li><strong>Temperature:</strong> ${weather.temperature}°C</li>
-            <li><strong>Humidity:</strong> ${weather.humidity}%</li>
-            <li><strong>Description:</strong> ${weather.weatherDescription}</li>
-          </ul>
-        `,
+        <h1>Weather Update for ${city}</h1>
+        <p>Temperature: ${weather.temperature}°C</p>
+        <p>Humidity: ${weather.humidity}%</p>
+        <p>Condition: ${weather.weatherDescription}</p>
+      `,
       )
       .join('');
+  }
 
-    const content = `
-      <h1>Weather Updates</h1>
-      <p>Here are the latest weather updates for your subscribed cities:</p>
-      ${weatherSections}
-    `;
+  private async addSendCombinedWeatherUpdateEmailJobsBulk(
+    jobsData: {
+      email: string;
+      weatherReports: {
+        city: string;
+        weather: Weather;
+      }[];
+    }[],
+  ) {
+    await this.emailsService.createSendEmailJobsBulk(
+      jobsData.map(({ email, weatherReports }) => ({
+        to: email,
+        subject: 'Weather Update',
+        content: this.buildWeatherUpdateContent(weatherReports),
+        contentType: 'html',
+      })),
+    );
+  }
 
-    await this.emailsService.createSendEmailJob({
-      to: email,
-      subject: 'Your Weather Updates',
-      content,
-      contentType: 'html',
-    });
+  private async addProcessWeatherUpdateChunkJob(
+    frequency: UpdatesFrequency,
+    skip: number,
+    take: number,
+  ) {
+    await this.processWeatherUpdateChunkQueue.add(
+      'process-weather-update-chunk',
+      {
+        frequency,
+        skip,
+        take,
+      },
+      {
+        removeOnComplete: 1000,
+        removeOnFail: 5000,
+      },
+    );
   }
 }
