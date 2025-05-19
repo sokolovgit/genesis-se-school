@@ -30,7 +30,7 @@ jobs:
       - name: Prepare deployment content
         run: |
           mkdir -p ./public
-          cp genesis-se-school/apps/client/src/index.html ./public/index.html
+          cp apps/client/src/index.html ./public/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
