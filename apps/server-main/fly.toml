@@ -26,6 +26,7 @@ primary_region = 'otp'
 
 [env]
   PORT=3000
+  DEPLOYED_URL=https://weather-app-se5.fly.dev/api
   DB_MIGRATE=true
   DOCS_ENABLED=false
   BULLBOARD_ENABLED=false
