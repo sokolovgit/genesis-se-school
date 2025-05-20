@@ -12,12 +12,11 @@ export class ProcessWeatherUpdateChunkProcessor extends WorkerHost {
   }
 
   async process(job: Job<ProcessWeatherUpdateChunkJobData, void, string>) {
-    const { frequency, take, skip } = job.data;
+    const { frequency, paginationOptions } = job.data;
 
     await this.subscriptionsService.processWeatherUpdateChunk(
       frequency,
-      take,
-      skip,
+      paginationOptions,
     );
   }
 }

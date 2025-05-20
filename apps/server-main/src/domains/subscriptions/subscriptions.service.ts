@@ -5,9 +5,9 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
-import { Uuid } from '@/commons';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { PaginationOptions, Uuid } from '@/commons';
 import { UpdatesFrequency } from '@/database/domains/subscriptions/enums/updates-frequency.enum';
 
 import { SubscriptionsRepository } from '@database/domains/subscriptions/repositories/subscriptions.repository';
@@ -139,19 +139,18 @@ export class SubscriptionsService {
       const skip = i;
       const take = Math.min(CHUNK_SIZE, totalSubscriptions - i);
 
-      await this.addProcessWeatherUpdateChunkJob(frequency, skip, take);
+      await this.addProcessWeatherUpdateChunkJob(frequency, { skip, take });
     }
   }
 
   async processWeatherUpdateChunk(
     frequency: UpdatesFrequency,
-    skip: number,
-    take: number,
+    paginationOptions: PaginationOptions,
   ) {
     const groupedSubscriptions =
       await this.subscriptionsRepository.getGroupedActiveSubscriptionsByFrequencyPaginated(
         frequency,
-        { skip, take },
+        paginationOptions,
       );
 
     const jobsData: {
@@ -300,15 +299,13 @@ export class SubscriptionsService {
 
   private async addProcessWeatherUpdateChunkJob(
     frequency: UpdatesFrequency,
-    skip: number,
-    take: number,
+    paginationOptions: PaginationOptions,
   ) {
     await this.processWeatherUpdateChunkQueue.add(
       'process-weather-update-chunk',
       {
         frequency,
-        skip,
-        take,
+        paginationOptions,
       },
       {
         removeOnComplete: 1000,
