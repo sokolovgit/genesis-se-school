@@ -159,17 +159,19 @@ export class SubscriptionsService {
       weatherReports: {
         city: string;
         weather: Weather;
+        token: string;
       }[];
     }[] = [];
 
     await Promise.all(
-      groupedSubscriptions.map(async ({ email, cities }) => {
+      groupedSubscriptions.map(async ({ email, cityTokenPairs }) => {
         try {
           const weatherResults = await Promise.allSettled(
-            cities.map((city: string) =>
+            cityTokenPairs.map(({ city, token }) =>
               this.weatherService.getWeatherByCityName(city).then((data) => ({
                 city,
                 weather: data,
+                token,
               })),
             ),
           );
@@ -181,6 +183,7 @@ export class SubscriptionsService {
               ): result is PromiseFulfilledResult<{
                 city: string;
                 weather: Weather;
+                token: string;
               }> => result.status === 'fulfilled',
             )
             .map((result) => result.value);
@@ -189,7 +192,7 @@ export class SubscriptionsService {
             .filter((result) => result.status === 'rejected')
             .forEach((result, index) => {
               this.logger.error(
-                `Failed to fetch weather for ${cities[index]}: ${result.reason}`,
+                `Failed to fetch weather for ${cityTokenPairs[index].city}: ${result.reason}`,
               );
             });
 
@@ -257,17 +260,21 @@ export class SubscriptionsService {
     weatherReports: {
       city: string;
       weather: Weather;
+      token: string;
     }[],
   ) {
     return weatherReports
-      .map(
-        ({ city, weather }) => `
-        <h1>Weather Update for ${city}</h1>
-        <p>Temperature: ${weather.temperature}°C</p>
-        <p>Humidity: ${weather.humidity}%</p>
-        <p>Condition: ${weather.weatherDescription}</p>
-      `,
-      )
+      .map(({ city, weather, token }) => {
+        const appUrl = this.configService.get<string>('deployedUrl');
+
+        return `
+            <h1>Weather Update for ${city}</h1>
+            <p>Temperature: ${weather.temperature}°C</p>
+            <p>Humidity: ${weather.humidity}%</p>
+            <p>Description: ${weather.weatherDescription}</p>
+            <h2>Link: <a href="${appUrl}/unsubscribe/${token}">Unsubscribe from updates for ${city}</a></h2>
+          `;
+      })
       .join('');
   }
 
@@ -277,6 +284,7 @@ export class SubscriptionsService {
       weatherReports: {
         city: string;
         weather: Weather;
+        token: string;
       }[];
     }[],
   ) {

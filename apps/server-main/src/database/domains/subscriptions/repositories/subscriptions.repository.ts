@@ -50,7 +50,6 @@ export class SubscriptionsRepository {
 
     return await qb.getCount();
   }
-
   async getGroupedActiveSubscriptionsByFrequencyPaginated(
     frequency: UpdatesFrequency,
     paginationOptions: PaginationOptions,
@@ -60,7 +59,8 @@ export class SubscriptionsRepository {
       .leftJoin('subscription.tokens', 'token')
       .select([
         'subscription.email AS email',
-        'json_agg(subscription.city) AS cities',
+        // Aggregate cities and tokens as an array of objects
+        `json_agg(json_build_object('city', subscription.city, 'token', token.id)) AS city_token_pairs`,
       ])
       .where('token.id IS NOT NULL')
       .andWhere('token.isActivated = true')
@@ -70,10 +70,19 @@ export class SubscriptionsRepository {
       .skip(paginationOptions.skip)
       .take(paginationOptions.take);
 
-    const rawResults: Array<{ email: string; cities: string[] }> =
-      await qb.getRawMany();
+    const rawResults: Array<{
+      email: string;
+      city_token_pairs: { city: string; token: string }[];
+    }> = await qb.getRawMany();
 
-    return rawResults;
+    const formattedResults = rawResults.map((result) => {
+      return {
+        email: result.email,
+        cityTokenPairs: result.city_token_pairs,
+      };
+    });
+
+    return formattedResults;
   }
 
   async getGroupedActiveSubscriptionsCount(frequency: UpdatesFrequency) {
